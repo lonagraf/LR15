@@ -1,17 +1,25 @@
 package com.example.myapplication;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -21,28 +29,29 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements RecipeAdapter.RecipeClickInterface {
 
     private FloatingActionButton recipeActivityBtn;
-    private ListView listView;
-    private ArrayAdapter<String> adapter;
-    private List<String> list;
-    private DatabaseReference databaseReference;
-    private String RECIPE_KEY = "Recipe";
+    FirebaseDatabase firebaseDatabase;
+    DatabaseReference databaseReference;
+    private RecyclerView recyclerView;
+    private ArrayList<Recipe> recipeArrayList;
+    private RecipeAdapter recipeAdapter;
+    private RelativeLayout relativeLayout;
+    private FloatingActionButton delete;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        recyclerView = findViewById(R.id.recyclerView);
+        relativeLayout = findViewById(R.id.relativeLayout);
         recipeActivityBtn = findViewById(R.id.addRecipeActivityBtn);
-        listView = findViewById(R.id.listView);
-        list = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
-        listView.setAdapter(adapter);
-        databaseReference = FirebaseDatabase.getInstance().getReference().child(RECIPE_KEY);
-        getData();
-
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        recipeArrayList = new ArrayList<>();
+        databaseReference = firebaseDatabase.getReference("Recipe");
         recipeActivityBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,27 +59,65 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        recipeAdapter = new RecipeAdapter(recipeArrayList, this, this, databaseReference);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(recipeAdapter);
+        getRecipes();
+        delete = findViewById(R.id.delete);
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteRecipe();
+            }
+        });
+
     }
 
-    private void getData ()
-    {
-        ValueEventListener valueEventListener = new ValueEventListener() {
+    public void onRecipeClick(int position){
+        recipeArrayList.get(position);
+    }
+
+    private void getRecipes() {
+        recipeArrayList.clear();
+        databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(list.size()>0)list.clear();
-               for (DataSnapshot ds : snapshot.getChildren()){
-                   Recipe recipe = ds.getValue(Recipe.class);
-                   assert recipe != null;
-                   list.add(recipe.name);
-               }
-               adapter.notifyDataSetChanged();
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                recipeArrayList.add(snapshot.getValue(Recipe.class));
+                recipeAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                recipeAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+                Recipe removedRecipe = snapshot.getValue(Recipe.class);
+                if (removedRecipe != null) {
+                    recipeArrayList.remove(removedRecipe);
+                    if (recipeAdapter != null) {
+                        recipeAdapter.notifyItemRemoved(recipeArrayList.indexOf(removedRecipe));
+                    }
+                }
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                recipeAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
             }
-        };
-        databaseReference.addValueEventListener(valueEventListener);
+        });
     }
+
+       public void deleteRecipe() {
+        databaseReference.removeValue();
+        Toast.makeText(this, "Рецепт удален", Toast.LENGTH_SHORT).show();
+    }
+
 }

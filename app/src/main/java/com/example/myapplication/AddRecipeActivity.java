@@ -1,7 +1,9 @@
 package com.example.myapplication;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -9,15 +11,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class AddRecipeActivity extends AppCompatActivity {
 
     private EditText edName, edDesc, edCalories;
     private Button addBtn;
-    private DatabaseReference databaseReference;
-    private String RECIPE_KEY = "Recipe";
+    DatabaseReference databaseReference;
+    FirebaseDatabase firebaseDatabase;
+    private String recipeId;
 
 
     @Override
@@ -29,31 +35,32 @@ public class AddRecipeActivity extends AppCompatActivity {
         edDesc = findViewById(R.id.edDesc);
         edCalories = findViewById(R.id.edCalories);
         addBtn = findViewById(R.id.addBtn);
-        databaseReference = FirebaseDatabase.getInstance().getReference().child(RECIPE_KEY);
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference("Recipe");
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String id = databaseReference.getKey();
+
                 String name = edName.getText().toString();
                 String desc = edDesc.getText().toString();
                 String calories = edCalories.getText().toString();
+                recipeId = name;
 
-                if (TextUtils.isEmpty(name) || TextUtils.isEmpty(desc) || TextUtils.isEmpty(calories)) {
-                    // Обработка случая, если одно из полей пусто
-                    Toast.makeText(AddRecipeActivity.this, "Пожалуйста, заполните все поля", Toast.LENGTH_SHORT).show();
-                } else {
-                    // Все поля заполнены, продолжаем добавление рецепта
-                    Recipe newRecipe = new Recipe(id, name, desc, calories);
-                    databaseReference.push().setValue(newRecipe);
+               Recipe newRecipe = new Recipe(recipeId, name, desc, calories);
 
-                    // Очистка полей EditText
-                    edName.setText("");
-                    edDesc.setText("");
-                    edCalories.setText("");
+               databaseReference.addValueEventListener(new ValueEventListener() {
+                   @Override
+                   public void onDataChange(@NonNull DataSnapshot snapshot) {
+                       databaseReference.child(recipeId).setValue(newRecipe);
+                       Toast.makeText(AddRecipeActivity.this, "Рецепт добавлен", Toast.LENGTH_SHORT).show();
+                       startActivity(new Intent(AddRecipeActivity.this, MainActivity.class));
+                   }
 
-                    // Информирование пользователя о том, что рецепт успешно добавлен
-                    Toast.makeText(AddRecipeActivity.this, "Рецепт успешно добавлен", Toast.LENGTH_SHORT).show();
-                }
+                   @Override
+                   public void onCancelled(@NonNull DatabaseError error) {
+                       Toast.makeText(AddRecipeActivity.this, "Ошибка добавления рецепта", Toast.LENGTH_SHORT).show();
+                   }
+               });
             }
         });
     }
