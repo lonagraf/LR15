@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "929822123282",
+    "firebase_url": "https://helpme-40833-default-rtdb.firebaseio.com",
+    "project_id": "helpme-40833",
+    "storage_bucket": "helpme-40833.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929822123282:android:0a8c3403d451a6d8a87fcb",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfQ4bdQAZFTbeCeNgjgTfUnlPe1C4o7b8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
