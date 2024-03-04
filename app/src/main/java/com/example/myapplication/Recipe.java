@@ -37,4 +37,7 @@ public class Recipe {
         this.calories = calories;
     }
 
-  }
+    public String getId() {
+        return id;
+    }
+}

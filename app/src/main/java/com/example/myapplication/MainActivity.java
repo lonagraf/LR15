@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements RecipeAdapter.Rec
     private RecipeAdapter recipeAdapter;
     private RelativeLayout relativeLayout;
     private FloatingActionButton delete;
+    public static final int EDIT_EMPLOYEE_REQUEST = 2;
 
 
     @Override
@@ -64,11 +65,15 @@ public class MainActivity extends AppCompatActivity implements RecipeAdapter.Rec
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(recipeAdapter);
         getRecipes();
-        delete = findViewById(R.id.delete);
-        delete.setOnClickListener(new View.OnClickListener() {
+        recipeAdapter.setOnItemClickListener(new RecipeAdapter.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
-                deleteRecipe();
+            public void onItemClick(Recipe recipe) {
+                Intent intent = new Intent(MainActivity.this, EditRecipeActivity.class);
+                intent.putExtra(EditRecipeActivity.EXTRA_ID, recipe.getId());
+                intent.putExtra(EditRecipeActivity.EXTRA_NAME, recipe.getName());
+                intent.putExtra(EditRecipeActivity.EXTRA_DESC, recipe.getDescription());
+                intent.putExtra(EditRecipeActivity.EXTRA_CALORIE, recipe.getCalories());
+                startActivityForResult(intent, 1);
             }
         });
 
@@ -115,9 +120,5 @@ public class MainActivity extends AppCompatActivity implements RecipeAdapter.Rec
         });
     }
 
-       public void deleteRecipe() {
-        databaseReference.removeValue();
-        Toast.makeText(this, "Рецепт удален", Toast.LENGTH_SHORT).show();
-    }
 
 }

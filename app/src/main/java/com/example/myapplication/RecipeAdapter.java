@@ -24,6 +24,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     private ArrayList<Recipe> recipeArrayList;
     private Context context;
     private RecipeClickInterface recipeClickInterface;
+    private  OnItemClickListener listener;
     int lastPos = -1;
 
     public RecipeAdapter(ArrayList<Recipe> recipeArrayList, Context context, RecipeClickInterface recipeClickInterface, DatabaseReference databaseReference) {
@@ -53,6 +54,14 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
             }
         });
+        holder.recipeName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    listener.onItemClick(recipeArrayList.get(position));
+                }
+            }
+        });
 
     }
 
@@ -72,6 +81,8 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private TextView recipeName, recipeCalories;
         private FloatingActionButton delete;
+        private OnItemClickListener listener;
+        private ArrayList<Recipe> recipeArrayList;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -79,11 +90,29 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             recipeName = itemView.findViewById(R.id.recipeName);
             recipeCalories = itemView.findViewById(R.id.recipeCalories);
 
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+                    if (listener != null && position != RecyclerView.NO_POSITION) {
+                        listener.onItemClick(recipeArrayList.get(position));
+                    }
+                }
+            });
+
         }
     }
 
     public interface RecipeClickInterface{
         void onRecipeClick(int position);
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(Recipe recipe);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
 
